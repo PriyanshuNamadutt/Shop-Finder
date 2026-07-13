@@ -39,30 +39,6 @@ stores — on an interactive map, so nearby customers can find them and see what
 - Fully responsive UI — tables collapse into stacked cards on small screens, mobile nav menu, touch-friendly
   buttons.
 
----
-
-## 📁 Project structure
-
-```
-.
-├── backend/               Express API server
-│   ├── config/db.js        MongoDB connection
-│   ├── config/cloudinary.js Cloudinary SDK configuration
-│   ├── middleware/         auth (JWT) & multer (in-memory) upload middleware
-│   ├── models/             User, Shop (+ embedded Product, structured address) Mongoose schemas
-│   ├── routes/              auth, shops, search routes
-│   ├── utils/               Brevo email sender, OTP generator, haversine distance
-│   └── server.js             app entry point
-│
-└── frontend/              React (Vite) SPA
-    └── src/
-        ├── api/axios.js           axios instance (adds JWT header)
-        ├── context/AuthContext.jsx
-        ├── components/           Navbar, MapView, LocationPicker, ProductTable,
-        │                         ShopResultRow, OtpModal, PrivateRoute
-        ├── utils/format.js       address formatting helper
-        └── pages/                Home, Login, Register, VerifyOtp, ListShop,
-                                   ShopDetail, Search, Dashboard, About
 ```
 
 ---
