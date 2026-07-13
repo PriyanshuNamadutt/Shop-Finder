@@ -4,9 +4,10 @@ import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 import ProductTable from "../components/ProductTable";
 import OtpModal from "../components/OtpModal";
+import ImageSourceModal from "../components/ImageSourceModal";
 import { formatAddress } from "../utils/format";
 
-const emptyProductForm = { name: "", quantity: "", photo: null, productId: null };
+const emptyProductForm = { name: "", quantity: "", photo: null, photoUrl: null, productId: null };
 
 const ShopDetail = () => {
   const { id } = useParams();
@@ -22,6 +23,8 @@ const ShopDetail = () => {
 
   const [showProductForm, setShowProductForm] = useState(false);
   const [productForm, setProductForm] = useState(emptyProductForm);
+  const [photoPreview, setPhotoPreview] = useState(null);
+  const [showImageSource, setShowImageSource] = useState(false);
   const [savingProduct, setSavingProduct] = useState(false);
   const [productError, setProductError] = useState("");
 
@@ -53,14 +56,26 @@ const ShopDetail = () => {
 
   const openAddForm = () => {
     setProductForm(emptyProductForm);
+    setPhotoPreview(null);
     setProductError("");
     setShowProductForm(true);
   };
 
   const openEditForm = (product) => {
-    setProductForm({ name: product.name, quantity: product.quantity, photo: null, productId: product._id });
+    setProductForm({ name: product.name, quantity: product.quantity, photo: null, photoUrl: null, productId: product._id });
+    setPhotoPreview(product.photo || null);
     setProductError("");
     setShowProductForm(true);
+  };
+
+  const handlePhotoSelected = ({ file, url, itemName }) => {
+    setProductForm((prev) => ({
+      ...prev,
+      photo: file || null,
+      photoUrl: url || null,
+      name: prev.name || itemName || prev.name,
+    }));
+    setPhotoPreview(file ? URL.createObjectURL(file) : url || null);
   };
 
   const handleProductSubmit = async (e) => {
@@ -75,7 +90,11 @@ const ShopDetail = () => {
       const fd = new FormData();
       fd.append("name", productForm.name);
       fd.append("quantity", productForm.quantity);
-      if (productForm.photo) fd.append("photo", productForm.photo);
+      if (productForm.photo) {
+        fd.append("photo", productForm.photo);
+      } else if (productForm.photoUrl) {
+        fd.append("photoUrl", productForm.photoUrl);
+      }
 
       if (productForm.productId) {
         await api.put(`/shops/${id}/products/${productForm.productId}`, fd, {
@@ -222,11 +241,19 @@ const ShopDetail = () => {
               </div>
               <div className="field">
                 <label>Product photo {productForm.productId ? "(optional - replaces current)" : ""}</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setProductForm({ ...productForm, photo: e.target.files[0] })}
-                />
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  {photoPreview ? (
+                    <img src={photoPreview} alt="Selected" className="product-photo" style={{ width: 64, height: 64 }} />
+                  ) : (
+                    <div className="product-photo-placeholder" style={{ width: 64, height: 64 }}>
+                      📦
+                    </div>
+                  )}
+                  <button type="button" className="btn btn-outline btn-sm" onClick={() => setShowImageSource(true)}>
+                    {photoPreview ? "Change photo" : "Add photo"}
+                  </button>
+                </div>
+                <p className="field-hint">Upload from your device, take a photo, or pick a ready-made icon from our item library.</p>
               </div>
               <div style={{ display: "flex", gap: 10 }}>
                 <button type="button" className="btn btn-outline btn-block" onClick={() => setShowProductForm(false)}>
@@ -239,6 +266,10 @@ const ShopDetail = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {showImageSource && (
+        <ImageSourceModal onSelect={handlePhotoSelected} onClose={() => setShowImageSource(false)} initialQuery={productForm.name} />
       )}
 
       {showDeleteOtp && (
