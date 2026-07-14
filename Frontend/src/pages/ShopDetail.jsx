@@ -48,7 +48,8 @@ const ShopDetail = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  const isOwner = user && shop && (shop.owner?._id === user.id || shop.owner === user.id);
+  const shopOwnerId = shop?.owner?._id || shop?.owner;
+  const isOwner = Boolean(user && shopOwnerId && String(shopOwnerId) === String(user.id));
 
   const filteredProducts = (shop?.products || []).filter((p) =>
     p.name.toLowerCase().includes(appliedSearch.toLowerCase())
