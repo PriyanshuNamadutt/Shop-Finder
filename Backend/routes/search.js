@@ -1,4 +1,5 @@
 const express = require("express");
+const axios = require("axios");
 const Shop = require("../models/Shop");
 const { haversineDistanceKm } = require("../utils/distance");
 
@@ -98,6 +99,42 @@ router.get("/location", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Search failed" });
+  }
+});
+
+// @route GET /api/search/product-image?q=xxx
+// Free, keyless reverse-image-style helper: searches Openverse (openverse.org) for
+// Creative Commons licensed photos matching a product name, so a shop owner can pick
+// a real photo instead of uploading their own. No API key required.
+router.get("/product-image", async (req, res) => {
+  try {
+    const { q } = req.query;
+    if (!q || !q.trim()) {
+      return res.status(400).json({ message: "A search query is required" });
+    }
+
+    const { data } = await axios.get("https://api.openverse.org/v1/images/", {
+      params: {
+        q: q.trim(),
+        page_size: 15,
+        license_type: "all-cc", // only Creative Commons licensed results
+      },
+      timeout: 8000,
+    });
+
+    const results = (data.results || []).map((img) => ({
+      id: img.id,
+      title: img.title,
+      thumbnail: img.thumbnail || img.url,
+      fullUrl: img.url,
+      source: img.source || img.foreign_landing_url,
+      license: img.license,
+    }));
+
+    res.json(results);
+  } catch (err) {
+    console.error("Openverse image search error:", err.response?.data || err.message);
+    res.status(502).json({ message: "Image search is temporarily unavailable. Please try uploading or capturing a photo instead." });
   }
 });
 
