@@ -1,23 +1,30 @@
 import React, { useState } from "react";
 import CameraCapture from "./CameraCapture";
-import LibraryPicker from "./LibraryPicker";
+import WebImageSearch from "./WebImageSearch";
 
 /**
  * props:
- *  - onSelect: (file: File, itemName?: string) => void   fires once, modal is expected to close after
+ *  - onSelect: (payload: { file?: File, url?: string, itemName?: string }) => void
+ *              fires once, modal is expected to close after
  *  - onClose: () => void
+ *  - initialQuery: string - optional pre-fill for the web photo search box
  */
-const ImageSourceModal = ({ onSelect, onClose }) => {
-  const [mode, setMode] = useState("upload"); // "upload" | "camera" | "library"
+const ImageSourceModal = ({ onSelect, onClose, initialQuery = "" }) => {
+  const [mode, setMode] = useState("upload"); // "upload" | "camera" | "search"
 
-  const handleSelect = (file, itemName) => {
-    onSelect(file, itemName);
+  const handleFileSelect = (file) => {
+    onSelect({ file });
+    onClose();
+  };
+
+  const handleUrlSelect = (url, itemName) => {
+    onSelect({ url, itemName });
     onClose();
   };
 
   const handleFileInput = (e) => {
     const file = e.target.files[0];
-    if (file) handleSelect(file);
+    if (file) handleFileSelect(file);
   };
 
   return (
@@ -32,8 +39,8 @@ const ImageSourceModal = ({ onSelect, onClose }) => {
           <button className={`tab-btn ${mode === "camera" ? "active" : ""}`} onClick={() => setMode("camera")} type="button">
             📷 Camera
           </button>
-          <button className={`tab-btn ${mode === "library" ? "active" : ""}`} onClick={() => setMode("library")} type="button">
-            🗂️ Item library
+          <button className={`tab-btn ${mode === "search" ? "active" : ""}`} onClick={() => setMode("search")} type="button">
+            🌐 Search photos
           </button>
         </div>
 
@@ -45,14 +52,14 @@ const ImageSourceModal = ({ onSelect, onClose }) => {
           </div>
         )}
 
-        {mode === "camera" && <CameraCapture onCapture={handleSelect} />}
+        {mode === "camera" && <CameraCapture onCapture={handleFileSelect} />}
 
-        {mode === "library" && (
+        {mode === "search" && (
           <>
             <p className="field-hint" style={{ marginTop: -4, marginBottom: 10 }}>
-              No product photo handy? Search our list of common items and use a ready-made icon instead.
+              No product photo handy? Search the web for a free, ready-to-use photo instead.
             </p>
-            <LibraryPicker onSelect={handleSelect} />
+            <WebImageSearch onSelect={handleUrlSelect} initialQuery={initialQuery} />
           </>
         )}
 
