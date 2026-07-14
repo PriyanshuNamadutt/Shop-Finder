@@ -148,7 +148,7 @@ router.post("/login", async (req, res) => {
 
 // @route GET /api/auth/me
 router.get("/me", protect, async (req, res) => {
-  res.json({ user: req.user });
+  res.json({ user: { id: req.user._id, name: req.user.name, email: req.user.email } });
 });
 
 module.exports = router;
