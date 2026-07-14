@@ -21,6 +21,20 @@ const uploadToCloudinary = (buffer, mimetype) =>
     );
   });
 
+// Uploads a remote image URL (e.g. picked from a web photo search) to Cloudinary.
+// Cloudinary fetches the URL itself, so our server never has to download it.
+const uploadUrlToCloudinary = (imageUrl) =>
+  new Promise((resolve, reject) => {
+    cloudinary.uploader.upload(
+      imageUrl,
+      { folder: "local-shops-finder/products", resource_type: "image" },
+      (err, result) => {
+        if (err) return reject(err);
+        resolve(result.secure_url);
+      }
+    );
+  });
+
 const otpExpiryDate = () =>
   new Date(Date.now() + (parseInt(process.env.OTP_EXPIRES_MINUTES) || 10) * 60 * 1000);
 
@@ -134,6 +148,8 @@ router.post("/:id/products", protect, upload.single("photo"), async (req, res) =
     let photoUrl = "";
     if (req.file) {
       photoUrl = await uploadToCloudinary(req.file.buffer, req.file.mimetype);
+    } else if (req.body.photoUrl) {
+      photoUrl = await uploadUrlToCloudinary(req.body.photoUrl);
     }
 
     // If a product with the same name (case-insensitive) exists, update quantity/photo instead of duplicating
@@ -172,6 +188,8 @@ router.put("/:id/products/:productId", protect, upload.single("photo"), async (r
     if (quantity !== undefined) product.quantity = parseInt(quantity);
     if (req.file) {
       product.photo = await uploadToCloudinary(req.file.buffer, req.file.mimetype);
+    } else if (req.body.photoUrl) {
+      product.photo = await uploadUrlToCloudinary(req.body.photoUrl);
     }
 
     await shop.save();
